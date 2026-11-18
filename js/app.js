@@ -863,7 +863,7 @@ async function renderAdminApp() {
               🔒 Gizlilik Korumalı: Liste İçerikleri Gizli
             </span>
             <button type="button" class="admin-btn" id="btnCloudConfig">
-              ☁️ ${cloudCfg.enabled ? 'Supabase Aktif' : 'Bulut DB Ayarı'}
+              ☁️ ${cloudCfg.enabled ? 'Bulut DB Aktif' : 'Firebase / Bulut DB'}
             </button>
             <button type="button" class="admin-btn primary" id="btnExportCsv">
               ⬇️ 1.000 Linki İndir (CSV / Excel)
@@ -1003,20 +1003,21 @@ function renderCloudConfigModal(cloudCfg) {
     <div class="modal-backdrop" id="cloudModalBackdrop">
       <form class="style-sheet" id="cloudConfigForm" style="background:#fff;color:#111827;border-color:#E5E7EB;max-width:520px;" onclick="event.stopPropagation()">
         <div>
-          <h3 style="font-size:1.05rem;font-weight:700;">Supabase Bulut Senkronizasyonu</h3>
+          <h3 style="font-size:1.05rem;font-weight:700;">Firebase / Bulut Veritabanı Senkronizasyonu</h3>
           <p style="font-size:0.8rem;color:#6B7280;margin-top:4px;">
-            Farklı telefonlardan aynı NFC etiketi okutulduğunda anlık senkronizasyon için Supabase URL ve Anon Key bilgilerinizi girin. Proje dizinindeki <code>supabase-schema.sql</code> dosyasını Supabase SQL Editor'de çalıştırmanız yeterlidir.
+            <strong>Firebase Realtime Database (En Kolay):</strong> Tablo oluşturmaya gerek yoktur. Firebase konsolunda <em>Realtime Database</em> oluşturup sadece <code>Database URL</code> adresini aşağıya yapıştırmanız yeterlidir.<br/>
+            *(Alternatif olarak Supabase URL + Anon Key de girebilirsiniz).*
           </p>
         </div>
 
         <div class="sheet-row">
-          <span class="sheet-label" style="color:#4B5563;">Supabase Project URL</span>
-          <input type="url" id="supaUrlInput" class="admin-search" placeholder="https://xxxx.supabase.co" value="${escapeHtml(cloudCfg.url)}" />
+          <span class="sheet-label" style="color:#4B5563;">Firebase Realtime Database URL (veya Supabase URL)</span>
+          <input type="url" id="supaUrlInput" class="admin-search" placeholder="https://proje-adiniz-default-rtdb.firebaseio.com" value="${escapeHtml(cloudCfg.url)}" />
         </div>
 
         <div class="sheet-row">
-          <span class="sheet-label" style="color:#4B5563;">Supabase Anon Public Key</span>
-          <input type="text" id="supaKeyInput" class="admin-search" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." value="${escapeHtml(cloudCfg.anonKey)}" />
+          <span class="sheet-label" style="color:#4B5563;">Secret / Anon Key (Firebase Test Modunda Boş Bırakabilirsiniz)</span>
+          <input type="text" id="supaKeyInput" class="admin-search" placeholder="İsteğe bağlı (Sadece Supabase için zorunlu)" value="${escapeHtml(cloudCfg.anonKey)}" />
         </div>
 
         <div class="sheet-actions" style="border-color:#E5E7EB;">
@@ -1148,7 +1149,7 @@ function bindAdminEvents() {
     e.preventDefault();
     const url = document.getElementById('supaUrlInput')?.value || '';
     const key = document.getElementById('supaKeyInput')?.value || '';
-    saveCloudConfig(url, key, Boolean(url && key));
+    saveCloudConfig(url, key, Boolean(url));
     showCloudModal = false;
     renderAdminApp();
   });

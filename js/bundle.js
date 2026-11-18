@@ -1422,25 +1422,62 @@ async function decryptPayload(token, cipherBase64) {
   }
 }
 
-// Cloud Config (Supabase REST API integration)
+// Cloud Config (Supports BOTH Firebase Realtime Database & Supabase REST API)
+const DEFAULT_FIREBASE_DB_URL = ''; // Paste Firebase Realtime DB URL here for global sync
 function getCloudConfig() {
   try {
     const raw = localStorage.getItem(CLOUD_CONFIG_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.url) return parsed;
+    }
   } catch (_) {}
-  return { url: '', anonKey: '', enabled: false };
+  if (DEFAULT_FIREBASE_DB_URL) {
+    return { url: DEFAULT_FIREBASE_DB_URL.replace(/\/+$/, ''), anonKey: '', enabled: true, provider: 'firebase' };
+  }
+  return { url: '', anonKey: '', enabled: false, provider: 'firebase' };
 }
-function saveCloudConfig(url, anonKey, enabled = true) {
+function saveCloudConfig(url, anonKey = '', enabled = true) {
   const cleanUrl = (url || '').trim().replace(/\/+$/, '');
   const cleanKey = (anonKey || '').trim();
-  const cfg = { url: cleanUrl, anonKey: cleanKey, enabled: Boolean(cleanUrl && cleanKey && enabled) };
+  const isFirebase = cleanUrl.includes('firebaseio.com') || cleanUrl.includes('firebasedatabase.app') || !cleanKey;
+  const cfg = {
+    url: cleanUrl,
+    anonKey: cleanKey,
+    provider: isFirebase ? 'firebase' : 'supabase',
+    enabled: Boolean(cleanUrl && enabled)
+  };
   localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cfg));
   return cfg;
 }
 
+function isFirebaseConfig(cfg) {
+  return cfg && cfg.enabled && cfg.url && (cfg.provider === 'firebase' || cfg.url.includes('firebaseio.com') || cfg.url.includes('firebasedatabase.app'));
+}
+
+async function firebaseFetch(path, options = {}) {
+  const cfg = getCloudConfig();
+  if (!isFirebaseConfig(cfg)) return null;
+  try {
+    const authParam = cfg.anonKey ? `?auth=${encodeURIComponent(cfg.anonKey)}` : '';
+    const res = await fetch(`${cfg.url}/${path}.json${authParam}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function supabaseFetch(path, options = {}) {
   const cfg = getCloudConfig();
-  if (!cfg.enabled || !cfg.url || !cfg.anonKey) return null;
+  if (!cfg.enabled || !cfg.url || isFirebaseConfig(cfg) || !cfg.anonKey) return null;
   try {
     const res = await fetch(`${cfg.url}/rest/v1/${path}`, {
       ...options,
@@ -1493,25 +1530,47 @@ async function getAllAccountsForAdmin() {
   const local = getAllAccountsMetadataLocal();
   const cfg = getCloudConfig();
   if (cfg.enabled) {
-    const remote = await supabaseFetch('nfc_accounts?select=*&order=slot.asc');
-    if (Array.isArray(remote) && remote.length > 0) {
-      const remoteMap = new Map(remote.map(r => [r.slot, r]));
-      const merged = local.map(item => {
-        const r = remoteMap.get(item.slot);
-        if (!r) return item;
-        return {
-          slot: item.slot,
-          token: item.token,
-          status: r.status || item.status,
-          adminNote: r.admin_note ?? item.adminNote,
-          lastAccessedAt: r.last_accessed_at || item.lastAccessedAt,
-          itemCount: r.item_count ?? item.itemCount,
-          listCount: r.list_count ?? item.listCount,
-          resetVersion: r.reset_version ?? item.resetVersion
-        };
-      });
-      saveAccountsMetadataLocal(merged);
-      return merged;
+    if (isFirebaseConfig(cfg)) {
+      const remoteObj = await firebaseFetch('nfc_accounts');
+      if (remoteObj && typeof remoteObj === 'object') {
+        const merged = local.map(item => {
+          const r = remoteObj[`slot_${item.slot}`] || remoteObj[item.slot];
+          if (!r) return item;
+          return {
+            slot: item.slot,
+            token: item.token,
+            status: r.status || item.status,
+            adminNote: r.admin_note ?? r.adminNote ?? item.adminNote,
+            lastAccessedAt: r.last_accessed_at || r.lastAccessedAt || item.lastAccessedAt,
+            itemCount: r.item_count ?? r.itemCount ?? item.itemCount,
+            listCount: r.list_count ?? r.listCount ?? item.listCount,
+            resetVersion: r.reset_version ?? r.resetVersion ?? item.resetVersion
+          };
+        });
+        saveAccountsMetadataLocal(merged);
+        return merged;
+      }
+    } else {
+      const remote = await supabaseFetch('nfc_accounts?select=*&order=slot.asc');
+      if (Array.isArray(remote) && remote.length > 0) {
+        const remoteMap = new Map(remote.map(r => [r.slot, r]));
+        const merged = local.map(item => {
+          const r = remoteMap.get(item.slot);
+          if (!r) return item;
+          return {
+            slot: item.slot,
+            token: item.token,
+            status: r.status || item.status,
+            adminNote: r.admin_note ?? item.adminNote,
+            lastAccessedAt: r.last_accessed_at || item.lastAccessedAt,
+            itemCount: r.item_count ?? item.itemCount,
+            listCount: r.list_count ?? item.listCount,
+            resetVersion: r.reset_version ?? item.resetVersion
+          };
+        });
+        saveAccountsMetadataLocal(merged);
+        return merged;
+      }
     }
   }
   return local;
@@ -1533,21 +1592,31 @@ async function updateAccountAdminFields(slot, updates) {
   saveAccountsMetadataLocal(accounts);
 
   const acc = accounts[idx];
-  await supabaseFetch('nfc_accounts', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      slot: acc.slot,
-      token: acc.token,
-      status: acc.status,
-      admin_note: acc.adminNote,
-      last_accessed_at: acc.lastAccessedAt,
-      item_count: acc.itemCount,
-      list_count: acc.listCount,
-      reset_version: acc.resetVersion,
-      updated_at: new Date().toISOString()
-    })
-  });
+  const payload = {
+    slot: acc.slot,
+    token: acc.token,
+    status: acc.status,
+    admin_note: acc.adminNote,
+    last_accessed_at: acc.lastAccessedAt,
+    item_count: acc.itemCount,
+    list_count: acc.listCount,
+    reset_version: acc.resetVersion,
+    updated_at: new Date().toISOString()
+  };
+
+  const cfg = getCloudConfig();
+  if (isFirebaseConfig(cfg)) {
+    await firebaseFetch(`nfc_accounts/slot_${acc.slot}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  } else {
+    await supabaseFetch('nfc_accounts', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(payload)
+    });
+  }
 
   return acc;
 }
@@ -1575,22 +1644,33 @@ async function resetUserAccountByAdmin(slot) {
 
   // Sync reset to Cloud if enabled
   const acc = accounts[idx];
-  await supabaseFetch(`nfc_vaults?token_hash=eq.${hash}`, { method: 'DELETE' });
-  await supabaseFetch('nfc_accounts', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      slot: acc.slot,
-      token: acc.token,
-      status: acc.status,
-      admin_note: acc.adminNote,
-      last_accessed_at: null,
-      item_count: 0,
-      list_count: 0,
-      reset_version: nextResetVersion,
-      updated_at: new Date().toISOString()
-    })
-  });
+  const payload = {
+    slot: acc.slot,
+    token: acc.token,
+    status: acc.status,
+    admin_note: acc.adminNote,
+    last_accessed_at: null,
+    item_count: 0,
+    list_count: 0,
+    reset_version: nextResetVersion,
+    updated_at: new Date().toISOString()
+  };
+
+  const cfg = getCloudConfig();
+  if (isFirebaseConfig(cfg)) {
+    await firebaseFetch(`nfc_vaults/${hash}`, { method: 'DELETE' });
+    await firebaseFetch(`nfc_accounts/slot_${acc.slot}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  } else {
+    await supabaseFetch(`nfc_vaults?token_hash=eq.${hash}`, { method: 'DELETE' });
+    await supabaseFetch('nfc_accounts', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(payload)
+    });
+  }
 
   if (syncChannel) syncChannel.postMessage({ type: 'vault_reset', token });
   return acc;
@@ -1655,10 +1735,18 @@ async function loadUserSession(token) {
   // Check cloud status if enabled
   const cfg = getCloudConfig();
   if (cfg.enabled) {
-    const remoteAcc = await supabaseFetch(`nfc_accounts?slot=eq.${account.slot}&select=*`);
-    if (Array.isArray(remoteAcc) && remoteAcc[0]) {
-      account.status = remoteAcc[0].status;
-      account.resetVersion = remoteAcc[0].reset_version || account.resetVersion;
+    if (isFirebaseConfig(cfg)) {
+      const remoteAcc = await firebaseFetch(`nfc_accounts/slot_${account.slot}`);
+      if (remoteAcc && typeof remoteAcc === 'object') {
+        account.status = remoteAcc.status || account.status;
+        account.resetVersion = remoteAcc.reset_version || remoteAcc.resetVersion || account.resetVersion;
+      }
+    } else {
+      const remoteAcc = await supabaseFetch(`nfc_accounts?slot=eq.${account.slot}&select=*`);
+      if (Array.isArray(remoteAcc) && remoteAcc[0]) {
+        account.status = remoteAcc[0].status;
+        account.resetVersion = remoteAcc[0].reset_version || account.resetVersion;
+      }
     }
   }
 
@@ -1671,9 +1759,16 @@ async function loadUserSession(token) {
 
   // Try Cloud Vault first if configured
   if (cfg.enabled) {
-    const remoteVault = await supabaseFetch(`nfc_vaults?token_hash=eq.${hash}&select=*`);
-    if (Array.isArray(remoteVault) && remoteVault[0] && remoteVault[0].encrypted_payload) {
-      vault = await decryptPayload(account.token, remoteVault[0].encrypted_payload);
+    if (isFirebaseConfig(cfg)) {
+      const remoteVault = await firebaseFetch(`nfc_vaults/${hash}`);
+      if (remoteVault && remoteVault.encrypted_payload) {
+        vault = await decryptPayload(account.token, remoteVault.encrypted_payload);
+      }
+    } else {
+      const remoteVault = await supabaseFetch(`nfc_vaults?token_hash=eq.${hash}&select=*`);
+      if (Array.isArray(remoteVault) && remoteVault[0] && remoteVault[0].encrypted_payload) {
+        vault = await decryptPayload(account.token, remoteVault[0].encrypted_payload);
+      }
     }
   }
 
@@ -1719,16 +1814,25 @@ async function saveUserVault(token, vault) {
   });
 
   // Push encrypted vault to Cloud if enabled
-  await supabaseFetch('nfc_vaults', {
-    method: 'POST',
-    headers: { 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify({
-      token_hash: hash,
-      encrypted_payload: cipher,
-      reset_version: account.resetVersion || 1,
-      updated_at: nowIso
-    })
-  });
+  const vaultPayload = {
+    token_hash: hash,
+    encrypted_payload: cipher,
+    reset_version: account.resetVersion || 1,
+    updated_at: nowIso
+  };
+  const cfg = getCloudConfig();
+  if (isFirebaseConfig(cfg)) {
+    await firebaseFetch(`nfc_vaults/${hash}`, {
+      method: 'PUT',
+      body: JSON.stringify(vaultPayload)
+    });
+  } else {
+    await supabaseFetch('nfc_vaults', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(vaultPayload)
+    });
+  }
 
   if (syncChannel) {
     syncChannel.postMessage({ type: 'vault_updated', token: account.token });
@@ -2595,7 +2699,7 @@ async function renderAdminApp() {
               🔒 Gizlilik Korumalı: Liste İçerikleri Gizli
             </span>
             <button type="button" class="admin-btn" id="btnCloudConfig">
-              ☁️ ${cloudCfg.enabled ? 'Supabase Aktif' : 'Bulut DB Ayarı'}
+              ☁️ ${cloudCfg.enabled ? 'Bulut DB Aktif' : 'Firebase / Bulut DB'}
             </button>
             <button type="button" class="admin-btn primary" id="btnExportCsv">
               ⬇️ 1.000 Linki İndir (CSV / Excel)
@@ -2735,20 +2839,21 @@ function renderCloudConfigModal(cloudCfg) {
     <div class="modal-backdrop" id="cloudModalBackdrop">
       <form class="style-sheet" id="cloudConfigForm" style="background:#fff;color:#111827;border-color:#E5E7EB;max-width:520px;" onclick="event.stopPropagation()">
         <div>
-          <h3 style="font-size:1.05rem;font-weight:700;">Supabase Bulut Senkronizasyonu</h3>
+          <h3 style="font-size:1.05rem;font-weight:700;">Firebase / Bulut Veritabanı Senkronizasyonu</h3>
           <p style="font-size:0.8rem;color:#6B7280;margin-top:4px;">
-            Farklı telefonlardan aynı NFC etiketi okutulduğunda anlık senkronizasyon için Supabase URL ve Anon Key bilgilerinizi girin. Proje dizinindeki <code>supabase-schema.sql</code> dosyasını Supabase SQL Editor'de çalıştırmanız yeterlidir.
+            <strong>Firebase Realtime Database (En Kolay):</strong> Tablo oluşturmaya gerek yoktur. Firebase konsolunda <em>Realtime Database</em> oluşturup sadece <code>Database URL</code> adresini aşağıya yapıştırmanız yeterlidir.<br/>
+            *(Alternatif olarak Supabase URL + Anon Key de girebilirsiniz).*
           </p>
         </div>
 
         <div class="sheet-row">
-          <span class="sheet-label" style="color:#4B5563;">Supabase Project URL</span>
-          <input type="url" id="supaUrlInput" class="admin-search" placeholder="https://xxxx.supabase.co" value="${escapeHtml(cloudCfg.url)}" />
+          <span class="sheet-label" style="color:#4B5563;">Firebase Realtime Database URL (veya Supabase URL)</span>
+          <input type="url" id="supaUrlInput" class="admin-search" placeholder="https://proje-adiniz-default-rtdb.firebaseio.com" value="${escapeHtml(cloudCfg.url)}" />
         </div>
 
         <div class="sheet-row">
-          <span class="sheet-label" style="color:#4B5563;">Supabase Anon Public Key</span>
-          <input type="text" id="supaKeyInput" class="admin-search" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." value="${escapeHtml(cloudCfg.anonKey)}" />
+          <span class="sheet-label" style="color:#4B5563;">Secret / Anon Key (Firebase Test Modunda Boş Bırakabilirsiniz)</span>
+          <input type="text" id="supaKeyInput" class="admin-search" placeholder="İsteğe bağlı (Sadece Supabase için zorunlu)" value="${escapeHtml(cloudCfg.anonKey)}" />
         </div>
 
         <div class="sheet-actions" style="border-color:#E5E7EB;">
@@ -2880,7 +2985,7 @@ function bindAdminEvents() {
     e.preventDefault();
     const url = document.getElementById('supaUrlInput')?.value || '';
     const key = document.getElementById('supaKeyInput')?.value || '';
-    saveCloudConfig(url, key, Boolean(url && key));
+    saveCloudConfig(url, key, Boolean(url));
     showCloudModal = false;
     renderAdminApp();
   });
