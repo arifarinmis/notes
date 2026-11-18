@@ -1044,6 +1044,8 @@ const BASE_EN = {
   cancel: "Cancel",
   limitReached: "1,000 item limit reached",
   duplicateItemWarning: "Item already added",
+  itemDeletedMsg: "Item deleted",
+  undoAction: "Undo",
   emptyNoteHint: "Tap above to add your first item",
   autoDeleteInfo: "Crossed-out item is deleted within 3 days.",
   autoDeleteRemaining: "Time remaining: {d} days {h} hours",
@@ -1093,6 +1095,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "İptal",
     limitReached: "1.000 ürün sınırına ulaşıldı",
     duplicateItemWarning: "Eklenmiş ürün",
+    itemDeletedMsg: "Ürün silindi",
+    undoAction: "Geri Al",
     emptyNoteHint: "İlk ürünü eklemek için yukarıya dokunun",
     autoDeleteInfo: "Üzeri çizilen madde 3 gün içinde silinir.",
     autoDeleteRemaining: "Silinmesine kalan süre: {d} gün {h} saat",
@@ -1139,6 +1143,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "Abbrechen",
     limitReached: "Limit von 1.000 Artikeln erreicht",
     duplicateItemWarning: "Artikel bereits vorhanden",
+    itemDeletedMsg: "Artikel gelöscht",
+    undoAction: "Rückgängig",
     emptyNoteHint: "Oben tippen, um den ersten Artikel hinzuzufügen",
     autoDeleteInfo: "Durchgestrichene Artikel werden in 3 Tagen gelöscht.",
     autoDeleteRemaining: "Verbleibende Zeit: {d} Tage {h} Std.",
@@ -1185,6 +1191,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "Annuler",
     limitReached: "Limite de 1 000 articles atteinte",
     duplicateItemWarning: "Article déjà ajouté",
+    itemDeletedMsg: "Article supprimé",
+    undoAction: "Annuler",
     emptyNoteHint: "Appuyez ci-dessus pour ajouter un article",
     autoDeleteInfo: "L'article barré sera supprimé sous 3 jours.",
     autoDeleteRemaining: "Temps restant : {d} j {h} h",
@@ -1203,7 +1211,7 @@ const BUILTIN_DICTIONARIES = {
   es: {
     newItemPlaceholder: "Añadir artículo...",
     newListTitle: "Nueva lista",
-    listNamePlaceholder: "Nombre de la lista...",
+    listNamePlaceholder: "Nombre de la liste...",
     itemCategoryPlaceholder: "Sección (opcional)...",
     allLists: "Todo",
     uncategorized: "General",
@@ -1231,6 +1239,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "Cancelar",
     limitReached: "Límite de 1.000 artículos alcanzado",
     duplicateItemWarning: "Artículo ya añadido",
+    itemDeletedMsg: "Artículo eliminado",
+    undoAction: "Deshacer",
     emptyNoteHint: "Toca arriba para añadir tu primer artículo",
     autoDeleteInfo: "El artículo tachado se eliminará en 3 días.",
     autoDeleteRemaining: "Tiempo restante: {d} días {h} horas",
@@ -1277,6 +1287,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "إلغاء",
     limitReached: "تم الوصول للحد الأقصى (1000)",
     duplicateItemWarning: "العنصر مضاف بالفعل",
+    itemDeletedMsg: "تم حذف العنصر",
+    undoAction: "تراجع",
     emptyNoteHint: "اضغط بالأعلى لإضافة أول عنصر",
     autoDeleteInfo: "يتم حذف العنصر المشطوب خلال 3 أيام.",
     autoDeleteRemaining: "الوقت المتبقي: {d} يوم و {h} ساعة",
@@ -1318,7 +1330,7 @@ async function initI18n(overrideLang = null) {
   }
 
   // 2. Check cached live translation in localStorage
-  const cacheKey = `tyn_i18n_cache_v3_${detectedLangCode}`;
+  const cacheKey = `tyn_i18n_cache_v4_${detectedLangCode}`;
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
@@ -1909,6 +1921,8 @@ let openExpiryItemId = null; // Tracks which checked item has its hourglass coun
 let duplicateWarningText = '';
 let duplicateHighlightItemId = null;
 let duplicateTimer = null;
+let lastDeletedBatch = null; // { listId, items: [...] }
+let undoDeleteTimer = null;
 let showNewListModal = false;
 let showAddToHomeModal = false;
 let deferredInstallPrompt = null;
@@ -2286,6 +2300,20 @@ function renderUserApp() {
         </footer>
       ` : ''}
     </main>
+
+    ${lastDeletedBatch && lastDeletedBatch.items.length > 0 ? `
+      <div class="undo-toast">
+        <span class="undo-toast-text">
+          ${lastDeletedBatch.items.length === 1
+            ? `${escapeHtml(lastDeletedBatch.items[0].text)} — ${escapeHtml(t('itemDeletedMsg'))}`
+            : `${lastDeletedBatch.items.length} × ${escapeHtml(t('itemDeletedMsg'))}`}
+        </span>
+        <button type="button" class="undo-btn" id="btnUndoDelete">
+          <span>↩</span>
+          <span>${escapeHtml(t('undoAction'))}</span>
+        </button>
+      </div>
+    ` : ''}
 
     ${showNewListModal ? renderNewListModal(listCategories) : ''}
     ${showAddToHomeModal ? renderAddToHomeModal() : ''}
@@ -2684,17 +2712,54 @@ function bindUserEvents(activeList) {
     });
   });
 
-  // Delete item immediately
+  // Delete item immediately (with Undo support)
   document.querySelectorAll('[data-delete-id]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!activeList) return;
       const itemId = btn.getAttribute('data-delete-id');
+      const targetItem = activeList.items.find(i => i.id === itemId);
+      if (!targetItem) return;
+
       if (openExpiryItemId === itemId) openExpiryItemId = null;
+      lastDeletedBatch = {
+        listId: activeList.id,
+        items: [{ ...targetItem }]
+      };
+      if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+      undoDeleteTimer = setTimeout(() => {
+        lastDeletedBatch = null;
+        renderUserApp();
+      }, 7000);
+
       activeList.items = activeList.items.filter(i => i.id !== itemId);
       await saveUserVault(currentToken, userVault);
       renderUserApp();
     });
   });
+
+  // Undo Delete button
+  const btnUndoDelete = document.getElementById('btnUndoDelete');
+  if (btnUndoDelete) {
+    btnUndoDelete.addEventListener('click', async () => {
+      if (!lastDeletedBatch || !Array.isArray(lastDeletedBatch.items)) return;
+      const targetList = userVault.lists.find(l => l.id === lastDeletedBatch.listId) || activeList;
+      if (targetList) {
+        lastDeletedBatch.items.forEach(restored => {
+          const existsById = targetList.items.some(i => i.id === restored.id);
+          const existsActiveDuplicate = !restored.checked && targetList.items.some(
+            i => !i.checked && i.text.trim().toLocaleLowerCase() === restored.text.trim().toLocaleLowerCase()
+          );
+          if (!existsById && !existsActiveDuplicate && getTotalItemCount(userVault) < MAX_ITEMS_PER_USER) {
+            targetList.items.unshift(restored);
+          }
+        });
+      }
+      if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+      lastDeletedBatch = null;
+      await saveUserVault(currentToken, userVault);
+      renderUserApp();
+    });
+  }
 
   // Per-list inline style panel events (strictly modifies ONLY activeList)
   if (activeList && openStyleForListId === activeList.id) {
@@ -2737,6 +2802,18 @@ function bindUserEvents(activeList) {
     });
 
     document.getElementById('btnClearChecked')?.addEventListener('click', async () => {
+      const checkedItems = activeList.items.filter(i => i.checked).map(i => ({ ...i }));
+      if (checkedItems.length > 0) {
+        lastDeletedBatch = {
+          listId: activeList.id,
+          items: checkedItems
+        };
+        if (undoDeleteTimer) clearTimeout(undoDeleteTimer);
+        undoDeleteTimer = setTimeout(() => {
+          lastDeletedBatch = null;
+          renderUserApp();
+        }, 7000);
+      }
       activeList.items = activeList.items.filter(i => !i.checked);
       openStyleForListId = null;
       await saveUserVault(currentToken, userVault);

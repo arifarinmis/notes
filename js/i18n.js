@@ -35,6 +35,8 @@ const BASE_EN = {
   cancel: "Cancel",
   limitReached: "1,000 item limit reached",
   duplicateItemWarning: "Item already added",
+  itemDeletedMsg: "Item deleted",
+  undoAction: "Undo",
   emptyNoteHint: "Tap above to add your first item",
   autoDeleteInfo: "Crossed-out item is deleted within 3 days.",
   autoDeleteRemaining: "Time remaining: {d} days {h} hours",
@@ -84,6 +86,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "İptal",
     limitReached: "1.000 ürün sınırına ulaşıldı",
     duplicateItemWarning: "Eklenmiş ürün",
+    itemDeletedMsg: "Ürün silindi",
+    undoAction: "Geri Al",
     emptyNoteHint: "İlk ürünü eklemek için yukarıya dokunun",
     autoDeleteInfo: "Üzeri çizilen madde 3 gün içinde silinir.",
     autoDeleteRemaining: "Silinmesine kalan süre: {d} gün {h} saat",
@@ -130,6 +134,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "Abbrechen",
     limitReached: "Limit von 1.000 Artikeln erreicht",
     duplicateItemWarning: "Artikel bereits vorhanden",
+    itemDeletedMsg: "Artikel gelöscht",
+    undoAction: "Rückgängig",
     emptyNoteHint: "Oben tippen, um den ersten Artikel hinzuzufügen",
     autoDeleteInfo: "Durchgestrichene Artikel werden in 3 Tagen gelöscht.",
     autoDeleteRemaining: "Verbleibende Zeit: {d} Tage {h} Std.",
@@ -176,6 +182,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "Annuler",
     limitReached: "Limite de 1 000 articles atteinte",
     duplicateItemWarning: "Article déjà ajouté",
+    itemDeletedMsg: "Article supprimé",
+    undoAction: "Annuler",
     emptyNoteHint: "Appuyez ci-dessus pour ajouter un article",
     autoDeleteInfo: "L'article barré sera supprimé sous 3 jours.",
     autoDeleteRemaining: "Temps restant : {d} j {h} h",
@@ -194,7 +202,7 @@ const BUILTIN_DICTIONARIES = {
   es: {
     newItemPlaceholder: "Añadir artículo...",
     newListTitle: "Nueva lista",
-    listNamePlaceholder: "Nombre de la lista...",
+    listNamePlaceholder: "Nombre de la liste...",
     itemCategoryPlaceholder: "Sección (opcional)...",
     allLists: "Todo",
     uncategorized: "General",
@@ -222,6 +230,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "Cancelar",
     limitReached: "Límite de 1.000 artículos alcanzado",
     duplicateItemWarning: "Artículo ya añadido",
+    itemDeletedMsg: "Artículo eliminado",
+    undoAction: "Deshacer",
     emptyNoteHint: "Toca arriba para añadir tu primer artículo",
     autoDeleteInfo: "El artículo tachado se eliminará en 3 días.",
     autoDeleteRemaining: "Tiempo restante: {d} días {h} horas",
@@ -268,6 +278,8 @@ const BUILTIN_DICTIONARIES = {
     cancel: "إلغاء",
     limitReached: "تم الوصول للحد الأقصى (1000)",
     duplicateItemWarning: "العنصر مضاف بالفعل",
+    itemDeletedMsg: "تم حذف العنصر",
+    undoAction: "تراجع",
     emptyNoteHint: "اضغط بالأعلى لإضافة أول عنصر",
     autoDeleteInfo: "يتم حذف العنصر المشطوب خلال 3 أيام.",
     autoDeleteRemaining: "الوقت المتبقي: {d} يوم و {h} ساعة",
@@ -311,7 +323,7 @@ export async function initI18n(overrideLang = null) {
   }
 
   // 2. Check cached live translation in localStorage
-  const cacheKey = `tyn_i18n_cache_v3_${detectedLangCode}`;
+  const cacheKey = `tyn_i18n_cache_v4_${detectedLangCode}`;
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {

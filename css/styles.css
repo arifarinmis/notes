@@ -682,6 +682,54 @@ html, body {
   color: #111827;
 }
 
+/* Undo Delete Floating Toast Bar */
+.undo-toast {
+  position: fixed;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  background: #1C1B18;
+  color: #FFFFFF;
+  font-family: var(--shell-font);
+  font-size: 0.83rem;
+  padding: 9px 12px 9px 15px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+  animation: fadeDown 0.16s ease;
+}
+
+.undo-toast-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.undo-btn {
+  border: none;
+  background: #FFFFFF;
+  color: #1C1B18;
+  font-family: var(--shell-font);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.undo-btn:active {
+  transform: scale(0.95);
+}
+
 /* New List Modal */
 .modal-backdrop {
   position: fixed;
