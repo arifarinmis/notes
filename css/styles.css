@@ -400,6 +400,27 @@ html, body {
   flex-shrink: 0;
 }
 
+.duplicate-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+  font-family: var(--shell-font);
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 8px;
+  animation: fadeDown 0.15s ease;
+}
+
+.check-row.duplicate-flash {
+  background: var(--list-hover);
+  border-radius: 8px;
+}
+
 /* Subtle section selector pills when typing/adding */
 .section-pills {
   display: flex;

@@ -28,6 +28,9 @@ let userVault = null;
 let selectedItemSection = '';
 let openStyleForListId = null; // Tracks which specific list has its inline style panel open
 let openExpiryItemId = null; // Tracks which checked item has its hourglass countdown info open
+let duplicateWarningText = '';
+let duplicateHighlightItemId = null;
+let duplicateTimer = null;
 let showNewListModal = false;
 let showAddToHomeModal = false;
 let deferredInstallPrompt = null;
@@ -331,6 +334,12 @@ function renderUserApp() {
               <button type="submit" class="add-submit-btn" ${totalItems >= MAX_ITEMS_PER_USER ? 'disabled' : ''}>+</button>
             </div>
 
+            ${duplicateWarningText ? `
+              <div class="duplicate-warning">
+                <span>⚠️ ${escapeHtml(duplicateWarningText)}</span>
+              </div>
+            ` : ''}
+
             <!-- In-List Section / Category Pills -->
             <div class="section-pills">
               ${itemSections.map(sec => `
@@ -350,7 +359,7 @@ function renderUserApp() {
               <div class="item-group">
                 ${showGroupHeaders ? `<div class="group-title">${escapeHtml(secName)}</div>` : ''}
                 ${secItems.map(item => `
-                  <div class="check-row ${item.checked ? 'checked' : ''}" data-item-id="${escapeHtml(item.id)}">
+                  <div class="check-row ${item.checked ? 'checked' : ''} ${duplicateHighlightItemId === item.id ? 'duplicate-flash' : ''}" data-item-id="${escapeHtml(item.id)}">
                     <button type="button" class="check-box" data-toggle-id="${escapeHtml(item.id)}">
                       <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </button>
@@ -701,9 +710,38 @@ function bindUserEvents(activeList) {
       const text = (input?.value || '').trim();
       if (!text) return;
 
+      // Duplicate check inside the same list (Crossed-out / checked items are excluded)
+      const normalizedNew = text.toLocaleLowerCase();
+      const existingUnchecked = (activeList.items || []).find(
+        i => !i.checked && i.text.trim().toLocaleLowerCase() === normalizedNew
+      );
+
+      if (existingUnchecked) {
+        duplicateWarningText = t('duplicateItemWarning');
+        duplicateHighlightItemId = existingUnchecked.id;
+        if (duplicateTimer) clearTimeout(duplicateTimer);
+        renderUserApp();
+        const restoredInput = document.getElementById('newItemInput');
+        if (restoredInput) {
+          restoredInput.value = text;
+          restoredInput.focus();
+          restoredInput.select();
+        }
+        duplicateTimer = setTimeout(() => {
+          duplicateWarningText = '';
+          duplicateHighlightItemId = null;
+          renderUserApp();
+        }, 2500);
+        return;
+      }
+
       if (getTotalItemCount(userVault) >= MAX_ITEMS_PER_USER) {
         return;
       }
+
+      duplicateWarningText = '';
+      duplicateHighlightItemId = null;
+      if (duplicateTimer) clearTimeout(duplicateTimer);
 
       activeList.items.unshift({
         id: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
@@ -727,6 +765,26 @@ function bindUserEvents(activeList) {
       const itemId = el.getAttribute('data-toggle-id');
       const item = activeList.items.find(i => i.id === itemId);
       if (!item) return;
+
+      // If unchecking a crossed-out item, verify an unchecked item with the same name isn't already in the list
+      if (item.checked) {
+        const normalized = item.text.trim().toLocaleLowerCase();
+        const duplicateActive = activeList.items.find(
+          i => i.id !== item.id && !i.checked && i.text.trim().toLocaleLowerCase() === normalized
+        );
+        if (duplicateActive) {
+          duplicateWarningText = t('duplicateItemWarning');
+          duplicateHighlightItemId = duplicateActive.id;
+          if (duplicateTimer) clearTimeout(duplicateTimer);
+          renderUserApp();
+          duplicateTimer = setTimeout(() => {
+            duplicateWarningText = '';
+            duplicateHighlightItemId = null;
+            renderUserApp();
+          }, 2500);
+          return;
+        }
+      }
 
       item.checked = !item.checked;
       item.checkedAt = item.checked ? Date.now() : null;

@@ -34,6 +34,7 @@ const BASE_EN = {
   save: "Done",
   cancel: "Cancel",
   limitReached: "1,000 item limit reached",
+  duplicateItemWarning: "Item already added",
   emptyNoteHint: "Tap above to add your first item",
   autoDeleteInfo: "Crossed-out item is deleted within 3 days.",
   autoDeleteRemaining: "Time remaining: {d} days {h} hours",
@@ -82,6 +83,7 @@ const BUILTIN_DICTIONARIES = {
     save: "Tamam",
     cancel: "İptal",
     limitReached: "1.000 ürün sınırına ulaşıldı",
+    duplicateItemWarning: "Eklenmiş ürün",
     emptyNoteHint: "İlk ürünü eklemek için yukarıya dokunun",
     autoDeleteInfo: "Üzeri çizilen madde 3 gün içinde silinir.",
     autoDeleteRemaining: "Silinmesine kalan süre: {d} gün {h} saat",
@@ -127,6 +129,7 @@ const BUILTIN_DICTIONARIES = {
     save: "Fertig",
     cancel: "Abbrechen",
     limitReached: "Limit von 1.000 Artikeln erreicht",
+    duplicateItemWarning: "Artikel bereits vorhanden",
     emptyNoteHint: "Oben tippen, um den ersten Artikel hinzuzufügen",
     autoDeleteInfo: "Durchgestrichene Artikel werden in 3 Tagen gelöscht.",
     autoDeleteRemaining: "Verbleibende Zeit: {d} Tage {h} Std.",
@@ -172,6 +175,7 @@ const BUILTIN_DICTIONARIES = {
     save: "OK",
     cancel: "Annuler",
     limitReached: "Limite de 1 000 articles atteinte",
+    duplicateItemWarning: "Article déjà ajouté",
     emptyNoteHint: "Appuyez ci-dessus pour ajouter un article",
     autoDeleteInfo: "L'article barré sera supprimé sous 3 jours.",
     autoDeleteRemaining: "Temps restant : {d} j {h} h",
@@ -217,6 +221,7 @@ const BUILTIN_DICTIONARIES = {
     save: "Listo",
     cancel: "Cancelar",
     limitReached: "Límite de 1.000 artículos alcanzado",
+    duplicateItemWarning: "Artículo ya añadido",
     emptyNoteHint: "Toca arriba para añadir tu primer artículo",
     autoDeleteInfo: "El artículo tachado se eliminará en 3 días.",
     autoDeleteRemaining: "Tiempo restante: {d} días {h} horas",
@@ -262,6 +267,7 @@ const BUILTIN_DICTIONARIES = {
     save: "تم",
     cancel: "إلغاء",
     limitReached: "تم الوصول للحد الأقصى (1000)",
+    duplicateItemWarning: "العنصر مضاف بالفعل",
     emptyNoteHint: "اضغط بالأعلى لإضافة أول عنصر",
     autoDeleteInfo: "يتم حذف العنصر المشطوب خلال 3 أيام.",
     autoDeleteRemaining: "الوقت المتبقي: {d} يوم و {h} ساعة",
@@ -305,7 +311,7 @@ export async function initI18n(overrideLang = null) {
   }
 
   // 2. Check cached live translation in localStorage
-  const cacheKey = `tyn_i18n_cache_v2_${detectedLangCode}`;
+  const cacheKey = `tyn_i18n_cache_v3_${detectedLangCode}`;
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
