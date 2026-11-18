@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "nfc_accounts": {
+      ".read": true,
+      ".write": true
+    },
+    "nfc_vaults": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

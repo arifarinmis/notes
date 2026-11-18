@@ -99,7 +99,7 @@ async function decryptPayload(token, cipherBase64) {
 }
 
 // Cloud Config (Supports BOTH Firebase Realtime Database & Supabase REST API)
-export const DEFAULT_FIREBASE_DB_URL = ''; // Paste Firebase Realtime DB URL here for global sync
+export const DEFAULT_FIREBASE_DB_URL = 'https://thingsyourneed-notes-default-rtdb.firebaseio.com'; // Global Firebase Realtime DB URL
 
 export function getCloudConfig() {
   try {
