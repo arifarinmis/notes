@@ -41,7 +41,13 @@ const BASE_EN = {
   inactiveTagDesc: "Please contact the administrator to activate this link.",
   invalidTagTitle: "Invalid NFC link",
   invalidTagDesc: "Please scan a valid ThingsYouNeed NFC tag.",
-  customSectionPrompt: "New section name:"
+  customSectionPrompt: "New section name:",
+  addToHomeScreen: "Add to Home Screen",
+  addToHomeTitle: "Add App to Home Screen",
+  addToHomeIosStep1: "1. Tap the Share button at the bottom of Safari.",
+  addToHomeIosStep2: "2. Select 'Add to Home Screen' from the menu.",
+  addToHomeAndroidStep1: "1. Tap the ⋮ (Menu) button at the top right of your browser.",
+  addToHomeAndroidStep2: "2. Tap 'Add to Home screen' or 'Install app'."
 };
 
 const BUILTIN_DICTIONARIES = {
@@ -83,7 +89,13 @@ const BUILTIN_DICTIONARIES = {
     inactiveTagDesc: "Etiketi aktifleştirmek için yönetici ile iletişime geçin.",
     invalidTagTitle: "Geçersiz NFC bağlantısı",
     invalidTagDesc: "Lütfen geçerli bir NFC etiketi okutun.",
-    customSectionPrompt: "Yeni bölüm adı:"
+    customSectionPrompt: "Yeni bölüm adı:",
+    addToHomeScreen: "Ana Ekrana Ekle",
+    addToHomeTitle: "Ana Ekrana Uygulama Olarak Ekle",
+    addToHomeIosStep1: "1. Tarayıcının altındaki Paylaş butonuna dokunun.",
+    addToHomeIosStep2: "2. Açılan menüden 'Ana Ekrana Ekle' seçeneğine dokunun.",
+    addToHomeAndroidStep1: "1. Tarayıcının sağ üstündeki ⋮ (Menü) butonuna dokunun.",
+    addToHomeAndroidStep2: "2. 'Ana ekrana ekle' veya 'Uygulamayı yükle' seçeneğine dokunun."
   },
   de: {
     newItemPlaceholder: "Artikel hinzufügen...",
@@ -122,7 +134,13 @@ const BUILTIN_DICTIONARIES = {
     inactiveTagDesc: "Bitte wenden Sie sich an den Administrator.",
     invalidTagTitle: "Ungültiger NFC-Link",
     invalidTagDesc: "Bitte scannen Sie einen gültigen NFC-Tag.",
-    customSectionPrompt: "Neuer Bereichsname:"
+    customSectionPrompt: "Neuer Bereichsname:",
+    addToHomeScreen: "Zum Home-Bildschirm",
+    addToHomeTitle: "App zum Home-Bildschirm hinzufügen",
+    addToHomeIosStep1: "1. Tippen Sie unten in Safari auf das Teilen-Symbol.",
+    addToHomeIosStep2: "2. Wählen Sie 'Zum Home-Bildschirm' aus dem Menü.",
+    addToHomeAndroidStep1: "1. Tippen Sie oben rechts auf das ⋮ (Menü)-Symbol.",
+    addToHomeAndroidStep2: "2. Wählen Sie 'Zum Startbildschirm hinzufügen' oder 'App installieren'."
   },
   fr: {
     newItemPlaceholder: "Ajouter un article...",
@@ -161,7 +179,13 @@ const BUILTIN_DICTIONARIES = {
     inactiveTagDesc: "Veuillez contacter l'administrateur.",
     invalidTagTitle: "Lien NFC invalide",
     invalidTagDesc: "Veuillez scanner un tag NFC valide.",
-    customSectionPrompt: "Nom du nouveau rayon :"
+    customSectionPrompt: "Nom du nouveau rayon :",
+    addToHomeScreen: "Ajouter à l'écran d'accueil",
+    addToHomeTitle: "Ajouter à l'écran d'accueil",
+    addToHomeIosStep1: "1. Appuyez sur le bouton Partager en bas de Safari.",
+    addToHomeIosStep2: "2. Sélectionnez 'Sur l'écran d'accueil' dans le menu.",
+    addToHomeAndroidStep1: "1. Appuyez sur le bouton ⋮ (Menu) en haut à droite.",
+    addToHomeAndroidStep2: "2. Appuyez sur 'Ajouter à l'écran d'accueil' ou 'Installer l'application'."
   },
   es: {
     newItemPlaceholder: "Añadir artículo...",
@@ -200,7 +224,13 @@ const BUILTIN_DICTIONARIES = {
     inactiveTagDesc: "Contacta con el administrador para activarla.",
     invalidTagTitle: "Enlace NFC no válido",
     invalidTagDesc: "Escanea una etiqueta NFC válida.",
-    customSectionPrompt: "Nombre de la sección:"
+    customSectionPrompt: "Nombre de la sección:",
+    addToHomeScreen: "Añadir a pantalla de inicio",
+    addToHomeTitle: "Añadir a la pantalla de inicio",
+    addToHomeIosStep1: "1. Toca el botón Compartir en la parte inferior de Safari.",
+    addToHomeIosStep2: "2. Selecciona 'Añadir a pantalla de inicio' en el menú.",
+    addToHomeAndroidStep1: "1. Toca el botón ⋮ (Menú) arriba a la derecha.",
+    addToHomeAndroidStep2: "2. Toca 'Añadir a pantalla de inicio' o 'Instalar aplicación'."
   },
   ar: {
     newItemPlaceholder: "إضافة عنصر...",
@@ -239,7 +269,13 @@ const BUILTIN_DICTIONARIES = {
     inactiveTagDesc: "يرجى التواصل مع المسؤول لتفعيله.",
     invalidTagTitle: "رابط غير صالح",
     invalidTagDesc: "يرجى مسح ملصق NFC صالح.",
-    customSectionPrompt: "اسم القسم الجديد:"
+    customSectionPrompt: "اسم القسم الجديد:",
+    addToHomeScreen: "إضافة إلى الشاشة الرئيسية",
+    addToHomeTitle: "إضافة التطبيق إلى الشاشة الرئيسية",
+    addToHomeIosStep1: "1. اضغط على زر المشاركة في أسفل المتصفح.",
+    addToHomeIosStep2: "2. اختر 'إضافة إلى الصفحة الرئيسية' من القائمة.",
+    addToHomeAndroidStep1: "1. اضغط على زر القائمة (⋮) في أعلى المتصفح.",
+    addToHomeAndroidStep2: "2. اختر 'الإضافة إلى الشاشة الرئيسية' أو 'تثبيت التطبيق'."
   }
 };
 
@@ -269,7 +305,7 @@ export async function initI18n(overrideLang = null) {
   }
 
   // 2. Check cached live translation in localStorage
-  const cacheKey = `tyn_i18n_cache_${detectedLangCode}`;
+  const cacheKey = `tyn_i18n_cache_v2_${detectedLangCode}`;
   try {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {

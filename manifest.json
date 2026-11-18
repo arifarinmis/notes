@@ -1,9 +1,7 @@
 {
-  "name": "Note — ThingsYouNeed",
-  "short_name": "Note",
+  "name": "Notes — ThingsYouNeed",
+  "short_name": "Notes",
   "description": "Minimalist NFC shopping list and note app for ThingsYouNeed.",
-  "start_url": "./",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#F4F3EF",
   "theme_color": "#F4F3EF",

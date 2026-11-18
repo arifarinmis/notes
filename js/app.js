@@ -29,8 +29,27 @@ let selectedItemSection = '';
 let openStyleForListId = null; // Tracks which specific list has its inline style panel open
 let openExpiryItemId = null; // Tracks which checked item has its hourglass countdown info open
 let showNewListModal = false;
+let showAddToHomeModal = false;
+let deferredInstallPrompt = null;
 let newListDraftThemeId = 'paper';
 let newListDraftFontId = 'sans';
+const SAVED_TOKEN_KEY = 'tyn_last_user_token_v1';
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+function isRunningStandalone() {
+  return (
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    window.navigator.standalone === true
+  );
+}
+
+function isIosDevice() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
+}
 
 // Admin State
 const ADMIN_AUTH_KEY = 'tyn_admin_authenticated_v1';
@@ -76,7 +95,14 @@ function resolveRoute() {
   } else if (pathSeg && pathSeg !== 'index.html' && pathSeg !== '404.html' && pathSeg.length >= 6 && window.location.protocol !== 'file:') {
     currentToken = pathSeg.toLowerCase();
   } else {
-    currentToken = INITIAL_TOKENS[0];
+    const saved = localStorage.getItem(SAVED_TOKEN_KEY);
+    currentToken = saved || INITIAL_TOKENS[0];
+  }
+
+  if (currentToken && INITIAL_TOKENS.includes(currentToken)) {
+    try {
+      localStorage.setItem(SAVED_TOKEN_KEY, currentToken);
+    } catch (_) {}
   }
 }
 
@@ -358,14 +384,82 @@ function renderUserApp() {
           </div>
         </section>
       ` : ''}
+
+      ${!isRunningStandalone() ? `
+        <footer class="a2hs-footer">
+          <button type="button" class="a2hs-btn" id="btnAddToHomeScreen">
+            <span class="a2hs-app-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+            </span>
+            <span>${escapeHtml(t('addToHomeScreen'))}</span>
+          </button>
+        </footer>
+      ` : ''}
     </main>
 
     ${showNewListModal ? renderNewListModal(listCategories) : ''}
+    ${showAddToHomeModal ? renderAddToHomeModal() : ''}
     ${renderPreviewDock()}
   `;
 
   bindUserEvents(activeList);
   bindPreviewDockEvents();
+}
+
+function renderAddToHomeModal() {
+  const ios = isIosDevice();
+  return `
+    <div class="modal-backdrop" id="a2hsBackdrop">
+      <div class="style-sheet" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="./apple-touch-icon.png" alt="App Icon" style="width:46px;height:46px;border-radius:11px;border:1px solid #E5E7EB;flex-shrink:0;" />
+          <div>
+            <h3 style="font-size:1rem;font-weight:700;color:#111827;">${escapeHtml(t('addToHomeTitle'))}</h3>
+            <p style="font-size:0.78rem;color:#6B7280;margin-top:2px;">Notes — ThingsYouNeed</p>
+          </div>
+        </div>
+
+        <div class="a2hs-steps">
+          <div class="a2hs-step-row">
+            <span class="a2hs-step-icon">
+              ${ios ? `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+              ` : `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="5" r="1.5" fill="currentColor"></circle>
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                  <circle cx="12" cy="19" r="1.5" fill="currentColor"></circle>
+                </svg>
+              `}
+            </span>
+            <span>${escapeHtml(ios ? t('addToHomeIosStep1') : t('addToHomeAndroidStep1'))}</span>
+          </div>
+
+          <div class="a2hs-step-row">
+            <span class="a2hs-step-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+            </span>
+            <span>${escapeHtml(ios ? t('addToHomeIosStep2') : t('addToHomeAndroidStep2'))}</span>
+          </div>
+        </div>
+
+        <div class="sheet-actions" style="border-color:#E5E7EB;justify-content:flex-end;">
+          <button type="button" class="btn-primary-pill" id="btnCloseA2hs" style="background:#111827;color:#FFF;">${escapeHtml(t('save'))}</button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // Inline style customization panel embedded right inside the active list card
@@ -778,6 +872,32 @@ function bindUserEvents(activeList) {
       renderUserApp();
     });
   }
+
+  // Add to Home Screen (Ana Ekrana Ekle) button & modal events
+  const btnAddToHomeScreen = document.getElementById('btnAddToHomeScreen');
+  if (btnAddToHomeScreen) {
+    btnAddToHomeScreen.addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        try {
+          deferredInstallPrompt.prompt();
+          await deferredInstallPrompt.userChoice;
+          deferredInstallPrompt = null;
+          return;
+        } catch (_) {}
+      }
+      showAddToHomeModal = true;
+      renderUserApp();
+    });
+  }
+
+  document.getElementById('a2hsBackdrop')?.addEventListener('click', () => {
+    showAddToHomeModal = false;
+    renderUserApp();
+  });
+  document.getElementById('btnCloseA2hs')?.addEventListener('click', () => {
+    showAddToHomeModal = false;
+    renderUserApp();
+  });
 }
 
 // ============================================================================

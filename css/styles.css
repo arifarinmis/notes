@@ -590,6 +590,77 @@ html, body {
   font-size: 0.88rem;
 }
 
+/* Add to Home Screen (Ana Ekrana Ekle) Bottom Bar */
+.a2hs-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.a2hs-btn {
+  border: 1px solid var(--shell-border);
+  background: var(--shell-card);
+  color: var(--shell-text);
+  font-family: var(--shell-font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.a2hs-btn:active {
+  transform: scale(0.96);
+}
+
+.a2hs-app-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #1C1B18;
+  color: #FFFDF9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.a2hs-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 0.85rem;
+  color: #1F2937;
+}
+
+.a2hs-step-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.a2hs-step-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #111827;
+}
+
 /* New List Modal */
 .modal-backdrop {
   position: fixed;
