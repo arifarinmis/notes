@@ -1,5 +1,5 @@
-// Pre-generated 1,000 unique NFC user links for https://note.thingsyourneed.com
-export const APP_DOMAIN = 'https://note.thingsyourneed.com';
+// Pre-generated 1,000 unique NFC user links for https://notes.thingsyourneed.com
+export const APP_DOMAIN = 'https://notes.thingsyourneed.com';
 export const INITIAL_TOKENS = [
   "e47ps8z5s4",
   "desdk8czbq",

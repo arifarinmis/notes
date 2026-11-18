@@ -5,7 +5,7 @@ const path = require('path');
 // Unambiguous URL-safe alphabet (no 0/O, 1/l/I)
 const ALPHABET = '23456789abcdefghjkmnpqrstuvwxyz';
 const TOTAL_USERS = 1000;
-const DOMAIN = 'https://note.thingsyourneed.com';
+const DOMAIN = 'https://notes.thingsyourneed.com';
 
 // Deterministic seed + HMAC so the 1000 links are 100% unique, original, and unguessable
 const MASTER_SEED = 'thingsyourneed-nfc-subapp-2026-v1-secret-seed';

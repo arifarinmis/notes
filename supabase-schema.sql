@@ -1,5 +1,5 @@
 -- ============================================================================
--- THINGSYOURNEED.COM - NFC SUB-APP (note.thingsyourneed.com)
+-- THINGSYOURNEED.COM - NFC SUB-APP (notes.thingsyourneed.com)
 -- Supabase Database Schema (Zero-Knowledge Privacy Separated Architecture)
 -- ============================================================================
 

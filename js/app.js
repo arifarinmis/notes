@@ -790,7 +790,7 @@ async function renderAdminApp() {
         <form id="adminLoginForm" style="background:#fff;border:1px solid #E5E7EB;border-radius:18px;padding:28px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 25px rgba(0,0,0,0.04);">
           <div>
             <h2 style="font-size:1.2rem;font-weight:700;color:#111827;">ThingsYouNeed Admin</h2>
-            <p style="font-size:0.82rem;color:#6B7280;margin-top:4px;">note.thingsyourneed.com • 1,000 NFC Kullanıcı Yönetimi</p>
+            <p style="font-size:0.82rem;color:#6B7280;margin-top:4px;">notes.thingsyourneed.com • 1,000 NFC Kullanıcı Yönetimi</p>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;">
             <label style="font-size:0.78rem;font-weight:600;color:#374151;">Admin Şifresi</label>
@@ -855,7 +855,7 @@ async function renderAdminApp() {
         <!-- Topbar -->
         <header class="admin-topbar">
           <div class="admin-brand">
-            <h1>note.thingsyourneed.com — NFC Admin Paneli</h1>
+            <h1>notes.thingsyourneed.com — NFC Admin Paneli</h1>
             <p>1.000 benzersiz şifresiz NFC bağlantısı yönetimi</p>
           </div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">

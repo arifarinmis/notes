@@ -1,9 +1,9 @@
-# note.thingsyourneed.com — NFC Shopping & Note Sub-App
+# notes.thingsyourneed.com — NFC Shopping & Note Sub-App
 
-Minimalist, passwordless NFC-powered shopping list and note application built for `https://note.thingsyourneed.com` (hosted on GitHub Pages with Supabase Cloud real-time sync).
+Minimalist, passwordless NFC-powered shopping list and note application built for `https://notes.thingsyourneed.com` (hosted on GitHub Pages with Supabase Cloud real-time sync).
 
 ## Özellikler (Features)
-- **1.000 Benzersiz Şifresiz NFC Bağlantısı**: `data/tokens.js` ve `nfc-links-1000.csv` içerisinde önceden üretilmiş, tahmin edilemez 1.000 adet özel kullanıcı bağlantısı (`https://note.thingsyourneed.com/<token>`).
+- **1.000 Benzersiz Şifresiz NFC Bağlantısı**: `data/tokens.js` ve `nfc-links-1000.csv` içerisinde önceden üretilmiş, tahmin edilemez 1.000 adet özel kullanıcı bağlantısı (`https://notes.thingsyourneed.com/<token>`).
 - **Sade Not Uygulaması Arayüzü**: Gereksiz metinlerden arındırılmış, mobil öncelikli arayüz.
 - **1.000 Ürün Kapasitesi**: Kullanıcı başına toplam 1.000 adet madde ekleme sınırı.
 - **Çift Katmanlı Kategorizasyon**:
@@ -16,10 +16,10 @@ Minimalist, passwordless NFC-powered shopping list and note application built fo
   - Kullanıcıların liste içerikleri tarayıcıda **AES-GCM** ile şifrelenir; Admin paneli içerikleri **kesinlikle göremez**.
   - Linkleri Aktif/Pasif yapma, Sıfırlama (Reset), Sipariş/Yönetici Notu ekleme, Son Erişim Tarihi & Ürün Sayısı istatistiği ve 1.000 linki tek tıkla CSV/Excel olarak dışa aktarma.
 
-## GitHub Pages & Alt Domain Kurulumu (`note.thingsyourneed.com`)
+## GitHub Pages & Alt Domain Kurulumu (`notes.thingsyourneed.com`)
 1. GitHub'da yeni bir repository oluşturun (Örn: `nfc-note-app`) ve bu klasördeki dosyaları yükleyin.
-2. Repository **Settings → Pages** bölümünden **Branch: `main` / `/ (root)`** seçip kaydedin. (`CNAME` dosyası otomatik olarak `note.thingsyourneed.com` adresini tanımlayacaktır).
+2. Repository **Settings → Pages** bölümünden **Branch: `main` / `/ (root)`** seçip kaydedin. (`CNAME` dosyası otomatik olarak `notes.thingsyourneed.com` adresini tanımlayacaktır).
 3. Domain DNS yönetim panelinizden (`thingsyourneed.com`) yeni bir `CNAME` kaydı ekleyin:
-   - **Name / Host**: `note`
+   - **Name / Host**: `notes`
    - **Target / Value**: `<github-kullanici-adiniz>.github.io`
 4. Supabase eşitlemesi için `supabase-schema.sql` dosyasını Supabase SQL Editor'de çalıştırın ve Admin panelindeki **Bulut DB Ayarı** butonundan Supabase URL ve Anon Key bilgilerinizi girin.
